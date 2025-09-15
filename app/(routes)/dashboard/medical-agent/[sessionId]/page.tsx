@@ -3,7 +3,7 @@ import { useParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import axios from 'axios';
 import { doctorAgent } from '../../_components/DoctorAgentCard';
-import { Circle, PhoneCall, PhoneOff } from 'lucide-react';
+import { Circle, Loader, PhoneCall, PhoneOff } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Vapi from '@vapi-ai/web';
@@ -16,6 +16,7 @@ type SessioDetail = {
   report: JSON,
   createdOn: Date,
 
+
 }
 type messages = {
   role: string,
@@ -24,6 +25,7 @@ type messages = {
 
 const MedicalVoiceAgent = () => {
   const { sessionId } = useParams();
+  const [loading, setLoading] = useState(false);
   const [sessionDetail, setSessionDetail] = useState<SessioDetail>();
   const [callStarted, setCallStarted] = useState(false);
   const [vapiInstance, setVapiInstance] = useState<any>();
@@ -39,10 +41,31 @@ const MedicalVoiceAgent = () => {
     console.log(result.data);
     setSessionDetail(result.data);
   }
-  const StartCall = () => {
+  const StartCall = async () => {
     const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY!);
     setVapiInstance(vapi);
-    vapi.start(process.env.NEXT_PUBLIC_VAPI_VOICE_ASSISTANT_ID!);
+    const VapiConfig = {
+      name: "AI Medical Doctor Voice Agent ",
+      firstMessage: "Hello, I am your AI medical assistant. I am here to help you with your medical concerns. How can I assist you today?",
+      transcriber: {
+        provider: "assembly-ai",
+        language: "en"
+      },
+      voice: {
+        provider: "playht",
+        voiceId: sessionDetail?.selectedDoctor.voiceId
+      }, model: {
+        provider: "openai",
+        model: "gpt-4",
+        messages: [
+          {
+            role: "system",
+            content: sessionDetail?.selectedDoctor.agentPrompt
+          }
+        ]
+      }
+    }//@ts-ignore
+    vapi.start(VapiConfig);
     vapi.on('call-start', () => { setCallStarted(true); console.log('Call started'); });
     vapi.on('call-end', () => { setCallStarted(false); console.log('Call ended'); });
     vapi.on('message', (message) => {
@@ -62,17 +85,17 @@ const MedicalVoiceAgent = () => {
         }
       }
     });
-    vapiInstance.on('speech-start', () => {
+    vapi.on('speech-start', () => {
       console.log('Assistant started speaking');
       setCurrentRole('assistant');
     });
-    vapiInstance.on('speech-end', () => {
+    vapi.on('speech-end', () => {
       console.log('Assistant stopped speaking');
       setCurrentRole('user');
     });
   }
-  const endCall = () => {
-
+  const endCall = async () => {
+    setLoading(true);
     if (!vapiInstance) {
       return;
     }
@@ -85,7 +108,18 @@ const MedicalVoiceAgent = () => {
     setLiveTranscript('');
     setCurrentRole('');
     setMessages([]);
+
+    const res = await GenerateReport();
+    setLoading(false);
+
   };
+  const GenerateReport = async () => {
+    const result = await axios.post("/api/medical-report", {
+      sessionId: sessionId, messages: messages, sessionDetail: sessionDetail
+    });
+    console.log(result.data);
+    return result.data;
+  }
   return (
     <div className='p-5 border rounded-2xl bg-secondary '>
       <div className='flex justify-between items-center mt-6 '>
@@ -108,10 +142,11 @@ const MedicalVoiceAgent = () => {
           {liveTranscript && <h2 className='text-lg '> {currentRole == "user" ? "You" : "Assistant"}: {liveTranscript}</h2>}
         </div>
 
-        {!callStarted ? <Button className='mt-10 cursor-pointer' onClick={StartCall}>
-          <PhoneCall />Start Call</Button> :
+        {!callStarted ?
+          <Button className='mt-10 cursor-pointer' onClick={StartCall}>
+            {loading ? <Loader className='animate-spin' /> : <PhoneCall />}Start Call</Button> :
           <Button variant={"destructive"} className='mt-10 cursor-pointer' onClick={endCall}>
-            <PhoneOff />Disconnect</Button>
+            {loading ? <Loader className='animate-spin' /> : <PhoneOff />} Disconnect</Button>
         }
       </div>
       }
