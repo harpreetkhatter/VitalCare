@@ -7,7 +7,9 @@ import { Circle, Loader, PhoneCall, PhoneOff } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Vapi from '@vapi-ai/web';
-type SessioDetail = {
+import { useRouter } from 'next/navigation';
+import { toast } from "sonner"
+export type SessionDetail = {
   id: number,
   sessionId: string,
   createdBy: string,
@@ -26,12 +28,13 @@ type messages = {
 const MedicalVoiceAgent = () => {
   const { sessionId } = useParams();
   const [loading, setLoading] = useState(false);
-  const [sessionDetail, setSessionDetail] = useState<SessioDetail>();
+  const [sessionDetail, setSessionDetail] = useState<SessionDetail>();
   const [callStarted, setCallStarted] = useState(false);
   const [vapiInstance, setVapiInstance] = useState<any>();
   const [currentRole, setCurrentRole] = useState<string>();
   const [liveTranscript, setLiveTranscript] = useState<string>();
   const [messages, setMessages] = useState<messages[]>([]);
+  const router = useRouter();
   useEffect(() => {
     sessionId && GetSessionDetails();
   }, [sessionId])
@@ -41,6 +44,21 @@ const MedicalVoiceAgent = () => {
     console.log(result.data);
     setSessionDetail(result.data);
   }
+  let handleCallStart = () => { setCallStarted(true); console.log('Call started'); };
+  let handleCallEnd = () => { setCallStarted(false); console.log('Call ended'); };
+  let handleMessage = (message: any) => {
+    if (message.type === 'transcript') {
+      const { role, transcript, transcriptType } = message;
+      if (transcriptType === 'partial') {
+        setLiveTranscript(transcript);
+        setCurrentRole(role);
+      } else if (transcriptType === 'final') {
+        setMessages((prev) => [...prev, { role, text: transcript }]);
+        setLiveTranscript('');
+        setCurrentRole('');
+      }
+    }
+  };
   const StartCall = async () => {
     const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY!);
     setVapiInstance(vapi);
@@ -66,25 +84,10 @@ const MedicalVoiceAgent = () => {
       }
     }//@ts-ignore
     vapi.start(VapiConfig);
-    vapi.on('call-start', () => { setCallStarted(true); console.log('Call started'); });
-    vapi.on('call-end', () => { setCallStarted(false); console.log('Call ended'); });
-    vapi.on('message', (message) => {
-      if (message.type === 'transcript') {
-        const { role, transcript, transcriptType } = message;
-        console.log(`${message.role}: ${message.transcript}`);
-        if (transcriptType === 'partial') {
 
-          setLiveTranscript(transcript);
-          setCurrentRole(role);
-        } else if (transcriptType === 'final') {
-          //fINAL TRANSCRIPT
-          setMessages((prevMessages) => [...prevMessages, { role: role, text: transcript }]);
-          setLiveTranscript('');
-          setCurrentRole('');
-
-        }
-      }
-    });
+    vapi.on('call-start', handleCallStart);
+    vapi.on('call-end', handleCallEnd);
+    vapi.on('message', handleMessage);
     vapi.on('speech-start', () => {
       console.log('Assistant started speaking');
       setCurrentRole('assistant');
@@ -95,24 +98,43 @@ const MedicalVoiceAgent = () => {
     });
   }
   const endCall = async () => {
-    setLoading(true);
-    if (!vapiInstance) {
-      return;
+    try {
+      setLoading(true);
+
+      // Generate report first
+      const result = await GenerateReport();
+
+      // Stop vapi if it exists
+      if (vapiInstance) {
+        vapiInstance.stop();
+        vapiInstance.off('call-start', handleCallStart);
+        vapiInstance.off('call-end', handleCallEnd);
+        vapiInstance.off('message', handleMessage);
+        setVapiInstance(null);
+      }
+
+      // Reset states
+      setCallStarted(false);
+      setLiveTranscript('');
+      setCurrentRole('');
+      setMessages([]);
+
+    
+   
+        router.push('/dashboard');
+  
+
+      toast.success("Your report is generated successfully", { duration: 3000 });
+
+
+    } catch (error) {
+      console.error("Error ending call:", error);
+      toast.error("Failed to generate report");
+    } finally {
+      setLoading(false);
     }
-    vapiInstance.stop();
-    vapiInstance.off('call-start');
-    vapiInstance.off('call-end');
-    vapiInstance.off('message');
-    setCallStarted(false);
-    setVapiInstance(null);
-    setLiveTranscript('');
-    setCurrentRole('');
-    setMessages([]);
-
-    const res = await GenerateReport();
-    setLoading(false);
-
   };
+
   const GenerateReport = async () => {
     const result = await axios.post("/api/medical-report", {
       sessionId: sessionId, messages: messages, sessionDetail: sessionDetail
@@ -143,9 +165,9 @@ const MedicalVoiceAgent = () => {
         </div>
 
         {!callStarted ?
-          <Button className='mt-10 cursor-pointer' onClick={StartCall}>
+          <Button className='mt-10 cursor-pointer' onClick={StartCall} disabled={loading}>
             {loading ? <Loader className='animate-spin' /> : <PhoneCall />}Start Call</Button> :
-          <Button variant={"destructive"} className='mt-10 cursor-pointer' onClick={endCall}>
+          <Button variant={"destructive"} className='mt-10 cursor-pointer' onClick={endCall} disabled={loading}>
             {loading ? <Loader className='animate-spin' /> : <PhoneOff />} Disconnect</Button>
         }
       </div>

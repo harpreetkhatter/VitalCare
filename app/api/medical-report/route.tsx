@@ -3,31 +3,8 @@ import { openai } from "@/config/OpenAiModel";
 import { SessionChartTable } from "@/config/schema";
 import { db } from "@/config/db";
 import { eq } from "drizzle-orm";
-const REPORT_GEN_PROMPT=`You are an AI Medical Voice Agent that just finished a voice conversation with a user. Based on doctor AI agent info and conversation between user and AI medical agent , generate a structured report with the following fields:
 
-1.sessionId: a unique session identifier
-
-2. agent: the medical specialist name (e.g., "General Physician AI")
-
-3. user: name of the patient or "Anonymous" if not provided
-
-4. timestamp: current date and time in ISO format
-
-5. chiefComplaint: one-sentence summary of the main health concern
-
-6. summary: a 2-3 sentence summary of the conversation, symptoms, and recommendations
-
-7. symptoms: list of symptoms mentioned by the user
-
-8. duration: how long the user has experienced the symptoms
-
-9. severity: mild, moderate, or severe
-
-10. medicationsMentioned: list of any medicines mentioned
-
-11. recommendations: list of AI suggestions (e.g., rest, see a doctor)
-
-Return the result in this JSON format:
+const REPORT_GEN_PROMPT = `You are an AI Medical Voice Agent that just finished a voice conversation with a user. Based on doctor AI agent info and conversation between user and AI medical agent, generate a structured report with the following fields:
 
 {
   "sessionId": "string",
@@ -43,39 +20,70 @@ Return the result in this JSON format:
   "recommendations": ["rec1", "rec2"]
 }
 
-
 Only include valid fields. Respond with nothing else.`
 
+export async function POST(req: NextRequest) {
+  try {
+    const { sessionId, messages, sessionDetail } = await req.json();
 
-export async function POST(req:NextRequest) {
-    const {sessionId, messages, sessionDetail} = await req.json();  
-    try{
-        const UserInput = "AI Doctor Agent Info: " + JSON.stringify(sessionDetail)+" , Conversation:"
-+ JSON.stringify(messages);
-        const completion = await openai.chat.completions.create({
-              model: 'google/gemini-2.5-flash',
-              messages: [
-                { role: 'system', content: REPORT_GEN_PROMPT },
-                {
-                  role: 'user',
-                  content: UserInput
-                },
-              ],
-              max_tokens: 512, 
-            }
-        );
-          const rawResp = completion.choices[0].message?.content;
-            const resp = rawResp?.trim().replace('```json', '').replace('```', '');
-            if (!resp) {
-              throw new Error("No response content to parse from OpenAI.");
-            }
-            const JSONResp = JSON.parse(resp);
-            //save to db
-            const result = await db.update(SessionChartTable).set({
-                report: JSONResp
-            }).where(eq(SessionChartTable.id, sessionId)).returning();
-            return NextResponse.json({ result });
-    }catch(e){
-         return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    if (!sessionId || !messages || !sessionDetail) {
+      return NextResponse.json(
+        { error: "Missing required fields (sessionId, messages, sessionDetail)" },
+        { status: 400 }
+      );
     }
+
+
+
+    const UserInput =
+      "AI Doctor Agent Info: " +
+      JSON.stringify(sessionDetail) +
+      " , Conversation:" +
+      JSON.stringify(messages);
+
+    // ✅ Use a valid OpenAI model
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // change if needed
+      messages: [
+        { role: "system", content: REPORT_GEN_PROMPT },
+        { role: "user", content: UserInput },
+      ],
+    });
+
+    const rawResp = completion.choices[0].message?.content;
+    if (!rawResp) {
+      throw new Error("No response content from AI.");
+    }
+
+    const cleanedResp = rawResp.trim().replace("```json", "").replace("```", "");
+    let JSONResp;
+    try {
+      JSONResp = JSON.parse(cleanedResp);
+    } catch (err) {
+      console.error("Invalid JSON from AI:", cleanedResp);
+      return NextResponse.json(
+        { error: "Failed to parse AI response", raw: cleanedResp },
+        { status: 500 }
+      );
+    }
+
+   
+
+    // ✅ Save to DB
+    const result = await db
+      .update(SessionChartTable)
+      .set({
+        report: JSONResp,
+        conversation: JSON.stringify(messages),
+      })
+      .where(eq(SessionChartTable.sessionId, sessionId))
+      .returning();
+
+   
+
+    return NextResponse.json(JSONResp);
+  } catch (e) {
+    console.error("API Error:", e);
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+  }
 }

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { db } from"@/config/db"
 import {currentUser} from "@clerk/nextjs/server"
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
     const { notes, selectedDoctor } = await req.json();
@@ -29,8 +29,17 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sessionId = searchParams.get("sessionId");
   const user = await currentUser();
+  if(sessionId==="all"){
+      const result = await db
+      .select()
+      .from(SessionChartTable)
+      .where(eq(SessionChartTable.createdBy, user?.primaryEmailAddress?.emailAddress!))
+      .orderBy(desc(SessionChartTable.id));
 
-  try {
+    return NextResponse.json(result);
+
+  }else{
+    try {
     const result = await db
       .select()
       .from(SessionChartTable)
@@ -40,5 +49,6 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error("Error fetching session charts:", e);
     return new Response("Error fetching session charts: " + e, { status: 500 });
+  }
   }
 }

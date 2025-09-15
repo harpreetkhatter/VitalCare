@@ -25,15 +25,23 @@ const AddNewSession = () => {
     const [selectedDoctor, setSelectedDoctor] = useState<doctorAgent>()
     const router = useRouter();
     const onClickNext = async () => {
-        setLoading(true)
-        const result = await axios.post("/api/suggest-doctors", {
-            notes: note,
-        })
-        console.log(result.data)
-        setSuggestedDoctors(result.data.JSONResp);
+        setLoading(true);
+        try {
+            const result = await axios.post("/api/suggest-doctors", {
+                notes: note,
+            });
+            console.log("API Response:", result.data);
 
-        setLoading(false)
-    }
+            // make sure it's an array before setting
+            setSuggestedDoctors(Array.isArray(result.data.JSONResp) ? result.data.JSONResp : []);
+        } catch (error) {
+            console.error("Error fetching doctors:", error);
+            setSuggestedDoctors([]); // fallback
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const onStartConsultation = async () => {
         setLoading(true);
         //save all info to database
@@ -43,11 +51,11 @@ const AddNewSession = () => {
         });
         console.log(result.data);
 
-     if(result.data[0].sessionId){
+        if (result.data[0].sessionId) {
 
-        console.log(result.data[0].sessionId);
-        router.push("/dashboard/medical-agent/" + result.data[0].sessionId);    
-     }
+            console.log(result.data[0].sessionId);
+            router.push("/dashboard/medical-agent/" + result.data[0].sessionId);
+        }
 
         setLoading(false);
 
@@ -77,7 +85,7 @@ const AddNewSession = () => {
                                     <h2 className="font-bold text-lg py-1">Select the doctor</h2>
                                     <div className="grid grid-cols-3 gap-5">
                                         {suggestedDoctors.map((doctor, index) => (
-                                            <SuggestedDoctorCard key={index} doctorAgent={doctor} setSelectedDoctor={() => setSelectedDoctor(doctor)} selectedDoctor={selectedDoctor!} />   
+                                            <SuggestedDoctorCard key={index} doctorAgent={doctor} setSelectedDoctor={() => setSelectedDoctor(doctor)} selectedDoctor={selectedDoctor!} />
                                         ))}
                                     </div>
                                 </div>
