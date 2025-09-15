@@ -17,12 +17,19 @@ type SessioDetail = {
   createdOn: Date,
 
 }
+type messages = {
+  role: string,
+  text: string
+}
 
 const MedicalVoiceAgent = () => {
   const { sessionId } = useParams();
   const [sessionDetail, setSessionDetail] = useState<SessioDetail>();
   const [callStarted, setCallStarted] = useState(false);
-  const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY!);
+  const [vapiInstance, setVapiInstance] = useState<any>();
+  const [currentRole, setCurrentRole] = useState<string>();
+  const [liveTranscript, setLiveTranscript] = useState<string>();
+  const [messages, setMessages] = useState<messages[]>([]);
   useEffect(() => {
     sessionId && GetSessionDetails();
   }, [sessionId])
@@ -33,15 +40,52 @@ const MedicalVoiceAgent = () => {
     setSessionDetail(result.data);
   }
   const StartCall = () => {
+    const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_API_KEY!);
+    setVapiInstance(vapi);
     vapi.start(process.env.NEXT_PUBLIC_VAPI_VOICE_ASSISTANT_ID!);
     vapi.on('call-start', () => { setCallStarted(true); console.log('Call started'); });
     vapi.on('call-end', () => { setCallStarted(false); console.log('Call ended'); });
     vapi.on('message', (message) => {
       if (message.type === 'transcript') {
+        const { role, transcript, transcriptType } = message;
         console.log(`${message.role}: ${message.transcript}`);
+        if (transcriptType === 'partial') {
+
+          setLiveTranscript(transcript);
+          setCurrentRole(role);
+        } else if (transcriptType === 'final') {
+          //fINAL TRANSCRIPT
+          setMessages((prevMessages) => [...prevMessages, { role: role, text: transcript }]);
+          setLiveTranscript('');
+          setCurrentRole('');
+
+        }
       }
     });
+    vapiInstance.on('speech-start', () => {
+      console.log('Assistant started speaking');
+      setCurrentRole('assistant');
+    });
+    vapiInstance.on('speech-end', () => {
+      console.log('Assistant stopped speaking');
+      setCurrentRole('user');
+    });
   }
+  const endCall = () => {
+
+    if (!vapiInstance) {
+      return;
+    }
+    vapiInstance.stop();
+    vapiInstance.off('call-start');
+    vapiInstance.off('call-end');
+    vapiInstance.off('message');
+    setCallStarted(false);
+    setVapiInstance(null);
+    setLiveTranscript('');
+    setCurrentRole('');
+    setMessages([]);
+  };
   return (
     <div className='p-5 border rounded-2xl bg-secondary '>
       <div className='flex justify-between items-center mt-6 '>
@@ -56,14 +100,17 @@ const MedicalVoiceAgent = () => {
           <p className='text-gray-500 text-sm'>Ai Voice Agent</p>
         </div>
 
-        <div className='mt-15 flex flex-col justify-center items-center'>
-          <h2 className='text-gray-500'>Assistant Message</h2>
-          <h2 className='text-lg '>Your Message</h2>
+        <div className='mt-12 flex flex-col justify-center items-center overflow-y-auto px-10 md:px-28 lg:px-52 xl:px-72 '>
+          {messages?.slice(-4).map((message, index) => (
+            <h2 key={index} className='text-gray-500 p-2'>{message.role === "user" ? "You" : "Assistant"}: {message.text}</h2>
+          ))}
+
+          {liveTranscript && <h2 className='text-lg '> {currentRole == "user" ? "You" : "Assistant"}: {liveTranscript}</h2>}
         </div>
 
-        {!callStarted ? <Button className='mt-10' onClick={StartCall}>
-          <PhoneCall />Start Call</Button>:
-          <Button variant={"destructive"} className='mt-10 ' onClick={() => vapi.stop()}>
+        {!callStarted ? <Button className='mt-10 cursor-pointer' onClick={StartCall}>
+          <PhoneCall />Start Call</Button> :
+          <Button variant={"destructive"} className='mt-10 cursor-pointer' onClick={endCall}>
             <PhoneOff />Disconnect</Button>
         }
       </div>
