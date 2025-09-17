@@ -30,7 +30,7 @@ const ViewReportDialog = ({ record }: Props) => {
 
   return (
     <Dialog>
-      <DialogTrigger>
+      <DialogTrigger asChild>
         <Button variant="link" size="sm">
           View Report
         </Button>
