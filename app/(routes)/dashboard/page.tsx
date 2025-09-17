@@ -12,7 +12,7 @@ function Dashboard(){
             <AddNewSession/>
         </div>
         
-        <HistoryList/>
+        <HistoryList />
         <DoctorsAgentList/>
     </div>
     )
