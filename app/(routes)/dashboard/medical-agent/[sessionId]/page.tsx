@@ -125,35 +125,31 @@ const MedicalVoiceAgent = () => {
       //   assistantId: "562d8c12-2e50-405c-9a23-5a8126d8849d",
       // };
 
-      // OPTION 2: Create a completely new configuration (use this one)
-      const VapiConfig = {
-        name: sessionDetail.selectedDoctor.specialist + " AI",
-        firstMessage: `Hello, I am your ${sessionDetail.selectedDoctor.specialist} AI. How can I help you today?`,
-        
-        transcriber: {
-          provider: "deepgram",
-          model: "nova-2",
-          language: "en-US"
-        },
+  const VapiConfig = {
+  name: sessionDetail.selectedDoctor.specialist + " AI",
+  firstMessage: `Hello, I am your ${sessionDetail.selectedDoctor.specialist} AI. How can I help you today?`,
+  
+  transcriber: {
+    provider: "assembly-ai", // Match your dashboard
+    language: "en"
+  },
 
-        voice: {
-          provider: "playht",
-          voiceId: sessionDetail.selectedDoctor.voiceId
-        },
+  voice: {
+    provider: "vapi", // Change from "playht" to "vapi"
+    voiceId: sessionDetail.selectedDoctor.voiceId // Use Vapi-compatible voice IDs
+  },
 
-        model: {
-          provider: "google",
-          model: "gemini-2.0-flash",
-          messages: [
-            {
-              role: "system",
-              content: sessionDetail.selectedDoctor.agentPrompt
-            }
-          ],
-          maxTokens: 250,
-          temperature: 0.5
-        }
-      };
+  model: {
+    provider: "google",
+    model: "gemini-2.0-flash",
+    messages: [{
+      role: "system",
+      content: sessionDetail.selectedDoctor.agentPrompt
+    }],
+    maxTokens: 250,
+    temperature: 0.5
+  }
+};
 
       // Set up all event listeners first
       vapi.on("call-start", handleCallStart);
