@@ -20,6 +20,9 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "VitalCare AI - Your 24/7 AI Health Assistant",
   description: "AI-powered healthcare consultations and medical assistance",
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
