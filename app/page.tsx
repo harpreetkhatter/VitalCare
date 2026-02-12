@@ -6,6 +6,7 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Footer from "@/components/Footer";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -395,7 +396,7 @@ const CTASection = ({ router }: { router: any }) => {
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 text-gray-300 py-8">
+    <footer className="bg-gray-50 border-t border-gray-200 py-8">
       <div className="container mx-auto px-4">
         <div className="text-center">
           <div className="flex items-center gap-2 mb-3 justify-center">
@@ -405,10 +406,12 @@ const Footer = () => {
                 <rect x="4" y="7" width="12" height="2" rx="1" fill="white" />
               </svg>
             </div>
-            <span className="text-lg font-bold text-white">VitalCare<span className="text-teal-500">AI</span></span>
+            <span className="text-lg font-bold text-gray-900">
+              VitalCare<span className="text-teal-600">AI</span>
+            </span>
           </div>
-          <p className="text-sm text-gray-400 mb-4">Your 24/7 AI Health Assistant</p>
-          <p className="text-sm text-gray-500">&copy; 2026 VitalCare AI. All rights reserved.</p>
+          <p className="text-sm text-gray-600 mb-2">Your 24/7 AI Health Assistant</p>
+          <p className="text-xs text-gray-500">© 2026 VitalCare AI. All rights reserved.</p>
         </div>
       </div>
     </footer>
