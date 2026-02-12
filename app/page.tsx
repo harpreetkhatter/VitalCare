@@ -395,7 +395,7 @@ const CTASection = ({ router }: { router: any }) => {
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-gray-300 py-8">
+    <footer className="bg-slate-900 text-gray-300 py-8">
       <div className="container mx-auto px-4">
         <div className="text-center">
           <div className="flex items-center gap-2 mb-3 justify-center">
