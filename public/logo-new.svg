@@ -1,0 +1,25 @@
+<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Medical Cross Icon -->
+  <rect x="4" y="14" width="8" height="12" rx="2" fill="#14B8A6"/>
+  <rect x="8" y="10" width="8" height="20" rx="2" fill="#0D9488"/>
+  <circle cx="12" cy="20" r="3" fill="#FFFFFF" opacity="0.3"/>
+  
+  <!-- AI Circuit Pattern -->
+  <circle cx="22" cy="12" r="2" fill="#14B8A6"/>
+  <circle cx="22" cy="28" r="2" fill="#14B8A6"/>
+  <line x1="20" y1="12" x2="16" y2="16" stroke="#14B8A6" stroke-width="1.5"/>
+  <line x1="20" y1="28" x2="16" y2="24" stroke="#14B8A6" stroke-width="1.5"/>
+  
+  <!-- Text -->
+  <text x="32" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#1F2937">
+    VitalCare
+  </text>
+  <text x="120" y="25" font-family="Arial, sans-serif" font-size="18" font-weight="600" fill="#14B8A6">
+    AI
+  </text>
+  
+  <!-- Tagline -->
+  <text x="32" y="34" font-family="Arial, sans-serif" font-size="8" font-weight="400" fill="#6B7280">
+    Your 24/7 AI Health Assistant
+  </text>
+</svg>

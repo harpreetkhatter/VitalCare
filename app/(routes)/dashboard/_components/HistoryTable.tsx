@@ -8,7 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { SessionDetail } from '../medical-agent/[sessionId]/page';
+import { SessionDetail } from '../types';
 
 import moment from 'moment';
 import ViewReportDialog from './ViewReportDialog';
@@ -34,9 +34,9 @@ const HistoryTable = ({ historyList }: Props) => {
                         <TableCell className="font-medium">{record.selectedDoctor.specialist}</TableCell>
                         <TableCell>{record.notes}</TableCell>
                         <TableCell>
-                          
 
-                          {moment(new Date(record.createdOn)).fromNow()}
+
+                            {moment(new Date(record.createdOn)).fromNow()}
                         </TableCell>
                         <TableCell className="text-right"><ViewReportDialog record={record} /></TableCell>
                     </TableRow>

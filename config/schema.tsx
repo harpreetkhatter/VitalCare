@@ -8,6 +8,18 @@ export const usersTable = pgTable("users", {
   credits: integer(),
 });
 
+export const userProfileTable = pgTable("userProfile", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  clerkId: varchar({ length: 255 }).notNull().unique().references(() => usersTable.clerkId),
+  dateOfBirth: varchar({ length: 50 }),
+  gender: varchar({ length: 20 }),
+  conditions: json().$type<string[]>(),
+  allergies: json().$type<string[]>(),
+  height: varchar({ length: 20 }),
+  weight: varchar({ length: 20 }),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
+
 export const SessionChartTable = pgTable("sessionChartTable", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   sessionId: varchar({ length: 255 }).notNull().unique(),
@@ -15,6 +27,7 @@ export const SessionChartTable = pgTable("sessionChartTable", {
   notes: text(),
   report: json().$type<any>(),          // ✅ structured report data
   conversation: json().$type<any>(),    // ✅ chat history
+  callDuration: integer().default(0),   // ✅ call duration in seconds
   createdBy: varchar({ length: 255 }).references(() => usersTable.email).notNull(),
- createdOn: timestamp().defaultNow().notNull(), 
+  createdOn: timestamp().defaultNow().notNull(),
 });

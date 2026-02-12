@@ -1,31 +1,59 @@
+"use client"
 import React from 'react'
-import Image from 'next/image'
 import { UserButton } from '@clerk/nextjs'
-import Link from "next/link";
+import Link from "next/link"
+import { usePathname } from 'next/navigation'
 
 const menuOptions = [
-  { id: 1, name: "Home", path: "/dashboard" },
-  { id: 2, name: "History", path: "/dashboard/history" },
-  { id: 3, name: "Pricing", path: "/dashboard/billing" },
-  { id: 4, name: "Profile", path: "/dashboard/profile" },
-];
+    { id: 1, name: "Dashboard", path: "/dashboard" },
+    { id: 2, name: "History", path: "/dashboard/history" },
+    { id: 3, name: "Billing", path: "/dashboard/billing" },
+    { id: 4, name: "Profile", path: "/dashboard/profile" },
+]
+
 const AppHeader = () => {
+    const pathname = usePathname()
+
     return (
-        <div className='flex items-center justify-between p-4 shadow px-10 md:px-20 lg:px-40 mb-10 '>
-            <Image src={"/logo.svg"} alt="Logo" width={180} height={90} />
-            <div className='hidden md:flex gap-12 items-center font-md'>
-              
+        <header className='bg-white border-b border-gray-200'>
+            <div className='flex items-center justify-between px-6 md:px-10 lg:px-20 py-4'>
+                {/* Logo */}
+                <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                            <rect x="8" y="4" width="2" height="14" rx="1" fill="white" />
+                            <rect x="4" y="8" width="14" height="2" rx="1" fill="white" />
+                            <circle cx="11" cy="11" r="1.5" fill="white" opacity="0.5" />
+                        </svg>
+                    </div>
+                    <span className="text-xl font-bold text-gray-900">VitalCare<span className="text-teal-600">AI</span></span>
+                </Link>
 
-                {menuOptions.map((option) => (
-                    <Link key={option.id} href={option.path}>
-                        <h2 className="hover:font-bold cursor-pointer">{option.name}</h2>
-                    </Link>
-                ))}
+                {/* Navigation */}
+                <nav className='hidden md:flex gap-8 items-center'>
+                    {menuOptions.map((option) => {
+                        const isActive = pathname === option.path
+                        return (
+                            <Link key={option.id} href={option.path}>
+                                <span className={`font-medium transition-colors cursor-pointer ${isActive ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'
+                                    }`}>
+                                    {option.name}
+                                </span>
+                            </Link>
+                        )
+                    })}
+                </nav>
 
-
+                {/* User Button */}
+                <UserButton
+                    appearance={{
+                        elements: {
+                            avatarBox: "w-10 h-10"
+                        }
+                    }}
+                />
             </div>
-            <UserButton />
-        </div>
+        </header>
     )
 }
 

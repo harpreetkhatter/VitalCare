@@ -66,7 +66,7 @@ const SkeletonOne = () => {
         variants={variants}
         className="flex flex-row rounded-full border border-neutral-100 dark:border-white/[0.2] p-2  items-center space-x-2 bg-white dark:bg-black"
       >
-        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 shrink-0" />
+        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 shrink-0" />
         <div className="w-full bg-gray-100 h-4 rounded-full dark:bg-neutral-900" />
       </motion.div>
       <motion.div
@@ -74,13 +74,13 @@ const SkeletonOne = () => {
         className="flex flex-row rounded-full border border-neutral-100 dark:border-white/[0.2] p-2 items-center space-x-2 w-3/4 ml-auto bg-white dark:bg-black"
       >
         <div className="w-full bg-gray-100 h-4 rounded-full dark:bg-neutral-900" />
-        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 shrink-0" />
+        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 shrink-0" />
       </motion.div>
       <motion.div
         variants={variants}
         className="flex flex-row rounded-full border border-neutral-100 dark:border-white/[0.2] p-2 items-center space-x-2 bg-white dark:bg-black"
       >
-        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 shrink-0" />
+        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 shrink-0" />
         <div className="w-full bg-gray-100 h-4 rounded-full dark:bg-neutral-900" />
       </motion.div>
     </motion.div>
@@ -147,7 +147,7 @@ const SkeletonThree = () => {
       className="flex flex-1 w-full h-full min-h-[6rem] dark:bg-dot-white/[0.2] rounded-lg bg-dot-black/[0.2] flex-col space-y-2"
       style={{
         background:
-          "linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab)",
+          "linear-gradient(-45deg, #14b8a6, #0d9488, #06b6d4, #0891b2)",
         backgroundSize: "400% 400%",
       }}
     >
@@ -281,75 +281,74 @@ const SkeletonFive = () => {
           className="rounded-full h-10 w-10"
         />
         <p className="text-xs text-neutral-500">
-          There are a lot of cool framerworks out there like React, Angular,
-          Vue, Svelte that can make your life ....
+          AI analyzing your symptoms and providing personalized health recommendations...
         </p>
       </motion.div>
       <motion.div
         variants={variantsSecond}
         className="flex flex-row rounded-full border border-neutral-100 dark:border-white/[0.2] p-2 items-center justify-end space-x-2 w-3/4 ml-auto bg-white dark:bg-black"
       >
-        <p className="text-xs text-neutral-500">Use PHP.</p>
-        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 shrink-0" />
+        <p className="text-xs text-neutral-500">Get instant diagnosis</p>
+        <div className="h-6 w-6 rounded-full bg-gradient-to-r from-teal-500 to-teal-600 shrink-0" />
       </motion.div>
     </motion.div>
   );
 };
 const items = [
   {
-    title: "AI Content Generation",
+    title: "Describe Symptoms",
     description: (
       <span className="text-sm">
-        Experience the power of AI in generating unique content.
+        Tell our AI about your symptoms through voice or text for instant analysis.
       </span>
     ),
     header: <SkeletonOne />,
     className: "md:col-span-1",
-    icon: <IconClipboardCopy className="h-4 w-4 text-neutral-500" />,
+    icon: <IconClipboardCopy className="h-4 w-4 text-teal-600" />,
   },
   {
-    title: "Automated Proofreading",
+    title: "Instant Analysis",
     description: (
       <span className="text-sm">
-        Let AI handle the proofreading of your documents.
+        Get AI-powered health insights and preliminary diagnosis in seconds.
       </span>
     ),
     header: <SkeletonTwo />,
     className: "md:col-span-1",
-    icon: <IconFileBroken className="h-4 w-4 text-neutral-500" />,
+    icon: <IconFileBroken className="h-4 w-4 text-teal-600" />,
   },
   {
-    title: "Contextual Suggestions",
+    title: "24/7 Availability",
     description: (
       <span className="text-sm">
-        Get AI-powered suggestions based on your writing context.
+        Access healthcare guidance anytime, anywhere with our AI assistant.
       </span>
     ),
     header: <SkeletonThree />,
     className: "md:col-span-1",
-    icon: <IconSignature className="h-4 w-4 text-neutral-500" />,
+    icon: <IconSignature className="h-4 w-4 text-teal-600" />,
   },
   {
-    title: "Sentiment Analysis",
+    title: "Doctor Recommendations",
     description: (
       <span className="text-sm">
-        Understand the sentiment of your text with AI analysis.
+        Get matched with the right specialists based on your symptoms and needs.
       </span>
     ),
     header: <SkeletonFour />,
     className: "md:col-span-2",
-    icon: <IconTableColumn className="h-4 w-4 text-neutral-500" />,
+    icon: <IconTableColumn className="h-4 w-4 text-teal-600" />,
   },
 
   {
-    title: "Text Summarization",
+    title: "Medical Reports",
     description: (
       <span className="text-sm">
-        Summarize your lengthy documents with AI technology.
+        Generate comprehensive health reports and track your medical history.
       </span>
     ),
     header: <SkeletonFive />,
     className: "md:col-span-1",
-    icon: <IconBoxAlignRightFilled className="h-4 w-4 text-neutral-500" />,
+    icon: <IconBoxAlignRightFilled className="h-4 w-4 text-teal-600" />,
   },
 ];
