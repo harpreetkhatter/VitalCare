@@ -158,7 +158,7 @@ const MedicalVoiceAgent = () => {
         },
         model: {
           provider: "google" as const,
-          model: "gemini-2.0-flash" as const,
+          model: "gemini-2.5-flash" as const,
           messages: [{
             role: "system" as const,
             content: sessionDetail.selectedDoctor.agentPrompt
