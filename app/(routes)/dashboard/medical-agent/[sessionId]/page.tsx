@@ -29,6 +29,12 @@ const MedicalVoiceAgent = () => {
   const [callDuration, setCallDuration] = useState(0);
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesRef = useRef<messages[]>([]);
+
+  // Keep messagesRef in sync so the endCall handler always has latest messages
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     if (sessionId) {
@@ -75,36 +81,37 @@ const MedicalVoiceAgent = () => {
     }
   }
 
-  let handleCallStart = () => {
+  // Use useCallback to prevent stale closures in Vapi event handlers
+  const handleCallStart = React.useCallback(() => {
     setCallStarted(true);
     setCallStatus('connected');
     setCallDuration(0);
     console.log('Call started');
-  };
+  }, []);
 
-  let handleCallEnd = () => {
+  const handleCallEnd = React.useCallback(() => {
     setCallStarted(false);
     setCallStatus('ended');
     console.log('Call ended');
-  };
+  }, []);
 
-  let handleError = (error: any) => {
+  const handleError = React.useCallback((error: any) => {
     console.error("Vapi error:", error);
     setCallStatus('error');
     toast.error(`Call error: ${error.message || 'Unknown error'}`);
-  };
+  }, []);
 
-  let handleSpeechStart = () => {
+  const handleSpeechStart = React.useCallback(() => {
     console.log("Assistant started speaking");
     setCurrentRole("assistant");
-  };
+  }, []);
 
-  let handleSpeechEnd = () => {
+  const handleSpeechEnd = React.useCallback(() => {
     console.log("Assistant stopped speaking");
     setCurrentRole("user");
-  };
+  }, []);
 
-  let handleMessage = (message: any) => {
+  const handleMessage = React.useCallback((message: any) => {
     console.log("Message received:", message);
     if (message.type === 'transcript') {
       const { role, transcript, transcriptType } = message;
@@ -112,12 +119,15 @@ const MedicalVoiceAgent = () => {
         setLiveTranscript(transcript);
         setCurrentRole(role);
       } else if (transcriptType === 'final') {
-        setMessages((prev) => [...prev, { role, text: transcript }]);
+        // Only add non-empty transcripts
+        if (transcript && transcript.trim()) {
+          setMessages((prev) => [...prev, { role, text: transcript }]);
+        }
         setLiveTranscript('');
         setCurrentRole('');
       }
     }
-  };
+  }, []);
 
   const StartCall = async () => {
     console.log("StartCall function called");
@@ -147,10 +157,12 @@ const MedicalVoiceAgent = () => {
 
       const VapiConfig: any = {
         name: sessionDetail.selectedDoctor.specialist + " AI",
-        firstMessage: `Hello, I am your ${sessionDetail.selectedDoctor.specialist} AI. How can I help you today?`,
+        firstMessage: `Hello, I am your ${sessionDetail.selectedDoctor.specialist}. How can I help you today?`,
         transcriber: {
-          provider: "assembly-ai" as const,
-          language: "en" as const
+          provider: "deepgram" as const,
+          model: "nova-3" as const,
+          language: "en" as const,
+          smartFormat: true,
         },
         voice: {
           provider: "vapi" as const,
@@ -163,9 +175,15 @@ const MedicalVoiceAgent = () => {
             role: "system" as const,
             content: sessionDetail.selectedDoctor.agentPrompt
           }],
-          maxTokens: 250,
-          temperature: 0.5
-        }
+          maxTokens: 150,
+          temperature: 0.7
+        },
+        silenceTimeoutSeconds: 30,
+        maxDurationSeconds: 600,
+        endCallMessage: "Thank you for your consultation. Take care and stay healthy!",
+        endCallPhrases: ["goodbye", "bye", "end call", "hang up"],
+        backgroundDenoisingEnabled: true,
+        hipaaEnabled: false,
       };
 
       vapi.on("call-start", handleCallStart);
@@ -237,7 +255,7 @@ const MedicalVoiceAgent = () => {
     try {
       const result = await axios.post("/api/medical-report", {
         sessionId: sessionId,
-        messages: messages,
+        messages: messagesRef.current,
         sessionDetail: sessionDetail
       });
       console.log("Report generated:", result.data);
@@ -325,14 +343,16 @@ const MedicalVoiceAgent = () => {
             </div>
 
             {/* Listening indicator */}
-            {callStarted && callStatus === 'connected' && currentRole === 'assistant' && (
+            {callStarted && callStatus === 'connected' && (
               <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
                 <div className="flex gap-1">
                   <div className="w-1 h-4 bg-teal-500 rounded-full animate-pulse"></div>
                   <div className="w-1 h-4 bg-teal-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                   <div className="w-1 h-4 bg-teal-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                 </div>
-                <span className="text-sm font-medium text-gray-700">Listening...</span>
+                <span className="text-sm font-medium text-gray-700">
+                  {currentRole === 'assistant' ? 'Speaking...' : 'Listening...'}
+                </span>
               </div>
             )}
           </div>
@@ -363,18 +383,21 @@ const MedicalVoiceAgent = () => {
 
         {/* Conversation History */}
         {messages.length > 0 && (
-          <div className="mb-8 space-y-3 max-h-64 overflow-y-auto px-2">
-            {messages.slice(-4).map((message, index) => (
+          <div className="mb-8 space-y-3 max-h-64 overflow-y-auto px-2" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
+            {messages.slice(-6).map((message, index) => (
               <div
                 key={index}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${message.role === 'user'
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white text-gray-800'
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-white text-gray-800 border border-gray-100'
                     }`}
                 >
+                  <p className="text-xs font-semibold mb-1 opacity-70">
+                    {message.role === 'user' ? 'You' : sessionDetail?.selectedDoctor?.specialist || 'Doctor'}
+                  </p>
                   <p className="text-sm">{message.text}</p>
                 </div>
               </div>
